@@ -1,0 +1,43 @@
+rm(list=ls(all=TRUE)) #clears workspace
+
+# Install these packages if you haven't already
+#install.packages("Rtools")
+#install.packages("deSolve")
+
+# Load deSolve package
+library(deSolve)
+
+# Create an SEIC function
+seic <- function(time, state, parameters) {
+  
+  with(as.list(c(state, parameters)), {
+    dB <- k * (exp(-s*((cos(3.142857*times-phi))^2)))#We need to replace this with the derivative of this equation
+    #dF <- Add fishing pulse here 
+    dS <- (B-c*(S+E+I+C))*(S+E+I+C) - (mu+qS*f)*S - beta*S*(I/(S+E+I+C)) 
+    dE <- beta*S*(I/(S+E+I+C)) - (mu+qS*f+gamma)*E
+    dI <- gamma*E - (mu+qS*f+alpha+rho)*I
+    dC <- rho*I - (mu+qC*f)*C
+    
+    return(list(c(dS, dE, dI, dC)))
+  })
+}
+
+
+#Birth max time: t=phi/pi
+#birth min time: t=phi/pi-1/2
+#pi/2<phi<pi/2
+
+## Set parameters and time frame
+init       <- c(S= 1000000, E = 100, I = 0, C = 0, B=1000) 
+fishing <- seq(0,1,length=10)
+times      <- seq(0, 1, by = 1/365)
+
+p <- c(qS = 0.1,qC = 1,gamma = 91.25, rho = 30, beta = 45, mu = 0.15, c = 1.05e-06, alpha = 2, f = 0, k=1000, s=2, phi=5)#parameter string, we need to get better values for k, 2 and phi
+out <- ode(
+  y = init,
+  times = times,
+  func = seic,
+  parms = p
+)
+
+plot(out,type='l',col='blue')
